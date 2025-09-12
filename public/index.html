@@ -82,11 +82,15 @@
     const nextBtn = document.getElementById('nextBtn');
     const restartBtn = document.getElementById('restartBtn');
 
+    // Store budget locally for later use, but do NOT send it to the bot
+    let storedBudget = "";
+
+    // Only send projectType, zip, homeValue to the bot
     const ctx = () => ({
       projectType: projectTypeEl.value,
       zip: zipEl.value,
       homeValue: homeValueEl.value,
-      budget: budgetEl.value,
+      // budget is intentionally NOT included here
     });
 
     const messages = [];
@@ -103,6 +107,7 @@
       const res = await fetch('/api/remodel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // Only send the context WITHOUT budget
         body: JSON.stringify({ messages, context: ctx() })
       });
       const data = await res.json();
@@ -150,6 +155,8 @@
       ) {
         return false;
       }
+      // Store budget locally for later scoring use
+      storedBudget = budgetEl.value;
       prechatForm.classList.add('disabled-form');
       chatSection.classList.remove('hidden');
       restartBtn.classList.remove('hidden');
