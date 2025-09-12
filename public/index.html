@@ -17,44 +17,56 @@
     .bot { background: #111114; border: 1px solid #242428; }
     .me { background: #0f2d1f; border: 1px solid #274231; }
     .small { font-size: 12px; opacity: .8; }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h2>Remodel Chat MVP</h2>
     <div class="card">
-      <div class="row">
-        <select id="projectType">
-          <option value="kitchen">Kitchen</option>
-          <option value="bathroom">Bathroom</option>
-          <option value="exterior">Exterior</option>
-        </select>
-        <input id="zip" placeholder="ZIP (e.g. 75022)" />
-        <input id="homeValue" placeholder="Home value (e.g. 1000000)" />
-        <input id="budget" placeholder="Budget (optional)" />
-      </div>
+      <form id="prechatForm" autocomplete="off" onsubmit="return false;">
+        <div class="row">
+          <select id="projectType" required>
+            <option value="">Select Project...</option>
+            <option value="kitchen">Kitchen</option>
+            <option value="bathroom">Bathroom</option>
+            <option value="exterior">Exterior</option>
+          </select>
+          <input id="zip" placeholder="ZIP (e.g. 75022)" required />
+          <input id="homeValue" placeholder="Home value (e.g. 1000000)" required />
+          <input id="budget" placeholder="Budget (optional)" required />
+        </div>
+        <button id="nextBtn" type="submit">Next</button>
+      </form>
 
-      <div id="chat" class="chat"></div>
-
-      <div style="display:flex; gap:8px; margin-top: 8px;">
-        <textarea id="input" placeholder="Type here..."></textarea>
-        <button id="send">Send</button>
+      <div id="chatSection" class="hidden">
+        <div id="chat" class="chat"></div>
+        <div style="display:flex; gap:8px; margin-top: 8px;">
+          <textarea id="input" placeholder="Type here..."></textarea>
+          <button id="send">Send</button>
+        </div>
+        <div class="small">Tip: Be as detailed as possible. The more precise you can be, the more accurate the scores.</div>
       </div>
-      <div class="small">Tip: Be as detailed as possible. The more precise you can be, the more accurate the scores. </div>
     </div>
   </div>
 
   <script>
+    const prechatForm = document.getElementById('prechatForm');
+    const chatSection = document.getElementById('chatSection');
     const chatEl = document.getElementById('chat');
     const inputEl = document.getElementById('input');
     const sendBtn = document.getElementById('send');
     const projectTypeEl = document.getElementById('projectType');
+    const zipEl = document.getElementById('zip');
+    const homeValueEl = document.getElementById('homeValue');
+    const budgetEl = document.getElementById('budget');
+    const nextBtn = document.getElementById('nextBtn');
 
     const ctx = () => ({
       projectType: projectTypeEl.value,
-      zip: document.getElementById('zip').value,
-      homeValue: document.getElementById('homeValue').value,
-      budget: document.getElementById('budget').value,
+      zip: zipEl.value,
+      homeValue: homeValueEl.value,
+      budget: budgetEl.value,
     });
 
     const messages = [];
@@ -93,7 +105,7 @@
         return `Describe the current state of your bathroom in as much detail as possible. Include: approximate size or S/M/L, ceiling height, vanity (width, sinks, cabinet style, countertop material), mirror/medicine storage, plumbing fixtures (faucet/shower/tub brands/finishes/ages), shower or tub details (size, pan, door/curtain, tile/surround material and condition), toilet type/age, flooring (material/condition), walls/paint/tile wainscot, lighting (ceiling, vanity), ventilation/exhaust, windows/doors/privacy, storage (linen/closet), and anything unusual/unique. Note roughly when it was last updated and any wear/issues (leaks, mold, grout, caulk).`;
       }
       if (type === 'kitchen') {
-        return `Describe the current state of your kitchen in as much detail as possible. Include: approximate size or S/M/L, ceiling height, layout (galley/L/U/island/peninsula), cabinet style/material/color/height-to-ceiling/age/condition, countertop material/color/edges/backsplash, appliances (types, ages, finishes), sink/faucet, flooring (material/color/condition), lighting (cans, pendants, under-cabinet, brightness), electrical outlets, ventilation/hood, windows/doors, paint colors, and anything unusual/unique. Note roughly when it was last updated and any wear/issues you notice.`;
+        return `Describe the current state of your kitchen in as much detail as possible. Include: approximate size or S/M/L, ceiling height, layout (galley/L/U/island/peninsula), cabinet style/material/color/height-to-ceiling/age/condition, countertop material/color/edges/backsplash, appliances (types, ages, finishes), sink/faucet, flooring (material/color/condition), lighting (cans, pendants, under-cabinet, brightness), electrical outlets, ventilation/hood, windows/doors, paint colors, and anything unusual/unique. Note roughly when it was last updated and any wear/issues you notice. Photos optional.`;
       }
       // Default/fallback for "exterior" or unknown
       return "Describe the current state of your home exterior in as much detail as possible. Include: siding/paint/brick/stone materials and condition, roof (material, age, condition), windows/doors (type, condition), landscaping, pathways, fencing, lighting, drainage, and anything unusual/unique. Note roughly when last updated and any wear/issues you notice.";
@@ -108,13 +120,25 @@
       add('assistant', prompt);
     }
 
-    // Start chat with initial prompt based on selected project type
-    (function init() {
+    // Only show chat section once form is filled and next is clicked
+    prechatForm.onsubmit = function() {
+      // Validate required fields (browser will do this, but we check again)
+      if (
+        !projectTypeEl.value ||
+        !zipEl.value.trim() ||
+        !homeValueEl.value.trim() ||
+        !budgetEl.value.trim()
+      ) {
+        return false;
+      }
+      prechatForm.classList.add('hidden');
+      chatSection.classList.remove('hidden');
       startNewChat();
-    })();
+      return false;
+    };
 
-    // If user changes project type, reset chat & show new first question
-    projectTypeEl.addEventListener('change', startNewChat);
+    // Optional: Allow user to restart (not requested, but easy to add)
+    // You can add a "Restart" button to reset the flow if needed.
   </script>
 </body>
 </html>
