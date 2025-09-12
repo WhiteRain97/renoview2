@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Remodel Chat MVP</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; background: #0b0b0c; color: #f5f5f5; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 24px; }
+    .card { background: #151517; border: 1px solid #26262a; border-radius: 14px; padding: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.2); }
+    .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+    input, select, button, textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #2f2f34; background: #1a1a1d; color: #fff; }
+    textarea { height: 100px; resize: vertical; }
+    button { cursor: pointer; }
+    .chat { margin-top: 14px; max-height: 60vh; overflow: auto; padding-right: 4px; }
+    .msg { padding: 10px 12px; border-radius: 12px; margin: 10px 0; line-height: 1.45; }
+    .bot { background: #111114; border: 1px solid #242428; }
+    .me { background: #0f2d1f; border: 1px solid #274231; }
+    .small { font-size: 12px; opacity: .8; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Remodel Chat MVP</h2>
+    <div class="card">
+      <div class="row">
+        <select id="projectType">
+          <option value="kitchen">Kitchen</option>
+          <option value="bathroom">Bathroom</option>
+          <option value="exterior">Exterior</option>
+        </select>
+        <input id="zip" placeholder="ZIP (e.g. 75022)" />
+        <input id="homeValue" placeholder="Home value (e.g. 1000000)" />
+        <input id="budget" placeholder="Budget (optional)" />
+      </div>
+
+      <div id="chat" class="chat"></div>
+
+      <div style="display:flex; gap:8px; margin-top: 8px;">
+        <textarea id="input" placeholder="Type here..."></textarea>
+        <button id="send">Send</button>
+      </div>
+      <div class="small">Tip: Start by describing the current state of your room. The assistant will ask targeted follow-ups and give you a scorecard when ready.</div>
+    </div>
+  </div>
+
+  <script>
+    const chatEl = document.getElementById('chat');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+
+    const ctx = () => ({
+      projectType: document.getElementById('projectType').value,
+      zip: document.getElementById('zip').value,
+      homeValue: document.getElementById('homeValue').value,
+      budget: document.getElementById('budget').value,
+    });
+
+    const messages = [];
+
+    function add(role, text) {
+      const div = document.createElement('div');
+      div.className = 'msg ' + (role === 'assistant' ? 'bot' : 'me');
+      div.textContent = text;
+      chatEl.appendChild(div);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    async function callAPI() {
+      const res = await fetch('/api/remodel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, context: ctx() })
+      });
+      const data = await res.json();
+      const text = data.text || '[No response]';
+      messages.push({ role: 'assistant', content: text });
+      add('assistant', text);
+    }
+
+    sendBtn.onclick = async () => {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      messages.push({ role: 'user', content: text });
+      add('user', text);
+      inputEl.value = '';
+      await callAPI();
+    };
+
+    // Kick off: tell the model to begin with its first question
+    (async function init() {
+      messages.push({ role: 'user', content: 'Please begin by asking your first question to evaluate my remodel.' });
+      add('user', 'Please begin by asking your first question to evaluate my remodel.');
+      await callAPI();
+    })();
+  </script>
+</body>
+</html>
