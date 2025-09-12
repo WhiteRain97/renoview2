@@ -48,9 +48,10 @@
     const chatEl = document.getElementById('chat');
     const inputEl = document.getElementById('input');
     const sendBtn = document.getElementById('send');
+    const projectTypeEl = document.getElementById('projectType');
 
     const ctx = () => ({
-      projectType: document.getElementById('projectType').value,
+      projectType: projectTypeEl.value,
       zip: document.getElementById('zip').value,
       homeValue: document.getElementById('homeValue').value,
       budget: document.getElementById('budget').value,
@@ -87,12 +88,33 @@
       await callAPI();
     };
 
-    // Kick off: tell the model to begin with its first question
-    (async function init() {
-      messages.push({ role: 'user', content: 'Please begin by asking your first question to evaluate my remodel.' });
-      add('user', 'Please begin by asking your first question to evaluate my remodel.');
-      await callAPI();
+    function getInitialPrompt(type) {
+      if (type === 'bathroom') {
+        return `Describe the current state of your bathroom in as much detail as possible. Include: approximate size or S/M/L, ceiling height, vanity (width, sinks, cabinet style, countertop material), mirror/medicine storage, plumbing fixtures (faucet/shower/tub brands/finishes/ages), shower or tub details (size, pan, door/curtain, tile/surround material and condition), toilet type/age, flooring (material/condition), walls/paint/tile wainscot, lighting (ceiling, vanity), ventilation/exhaust, windows/doors/privacy, storage (linen/closet), and anything unusual/unique. Note roughly when it was last updated and any wear/issues (leaks, mold, grout, caulk).`;
+      }
+      if (type === 'kitchen') {
+        return `Describe the current state of your kitchen in as much detail as possible. Include: approximate size or S/M/L, ceiling height, layout (galley/L/U/island/peninsula), cabinet style/material/color/height-to-ceiling/age/condition, countertop material/color/edges/backsplash, appliances (types, ages, finishes), sink/faucet, flooring (material/color/condition), lighting (cans, pendants, under-cabinet, brightness), electrical outlets, ventilation/hood, windows/doors, paint colors, and anything unusual/unique. Note roughly when it was last updated and any wear/issues you notice. Photos optional.`;
+      }
+      // Default/fallback for "exterior" or unknown
+      return "Describe the current state of your home exterior in as much detail as possible. Include: siding/paint/brick/stone materials and condition, roof (material, age, condition), windows/doors (type, condition), landscaping, pathways, fencing, lighting, drainage, and anything unusual/unique. Note roughly when last updated and any wear/issues you notice.";
+    }
+
+    function startNewChat() {
+      chatEl.innerHTML = '';
+      messages.length = 0;
+      const type = projectTypeEl.value;
+      const prompt = getInitialPrompt(type);
+      messages.push({ role: 'assistant', content: prompt });
+      add('assistant', prompt);
+    }
+
+    // Start chat with initial prompt based on selected project type
+    (function init() {
+      startNewChat();
     })();
+
+    // If user changes project type, reset chat & show new first question
+    projectTypeEl.addEventListener('change', startNewChat);
   </script>
 </body>
 </html>
