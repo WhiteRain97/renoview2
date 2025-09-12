@@ -122,7 +122,7 @@
       add('assistant', prompt);
     }
 
-    // Only show chat section once form is filled and next is clicked
+    // Only gray out form once form is filled and next is clicked
     prechatForm.onsubmit = function() {
       // Validate required fields (browser will do this, but we check again)
       if (
@@ -133,7 +133,7 @@
       ) {
         return false;
       }
-      prechatForm.classList.add('hidden');
+      prechatForm.classList.add('disabled-form');
       chatSection.classList.remove('hidden');
       startNewChat();
       return false;
