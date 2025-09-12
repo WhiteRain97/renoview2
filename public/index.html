@@ -20,6 +20,22 @@
     .disabled-form { opacity: 0.6; pointer-events: none; }
     .disabled-form input, .disabled-form select, .disabled-form button { background: #232326 !important; color: #999 !important; }
     .hidden { display: none !important; }
+    .restart-btn { 
+      margin: 16px auto 0 auto; 
+      display: block; 
+      background: #232326;
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 10px 30px;
+      font-size: 16px;
+      opacity: 0.85;
+      transition: opacity 0.2s;
+    }
+    .restart-btn:hover {
+      opacity: 1;
+      background: #222;
+    }
   </style>
 </head>
 <body>
@@ -48,6 +64,7 @@
           <button id="send">Send</button>
         </div>
         <div class="small">Tip: Be as detailed as possible. The more precise you can be, the more accurate the scores.</div>
+        <button id="restartBtn" class="restart-btn hidden" type="button">Restart</button>
       </div>
     </div>
   </div>
@@ -63,6 +80,7 @@
     const homeValueEl = document.getElementById('homeValue');
     const budgetEl = document.getElementById('budget');
     const nextBtn = document.getElementById('nextBtn');
+    const restartBtn = document.getElementById('restartBtn');
 
     const ctx = () => ({
       projectType: projectTypeEl.value,
@@ -122,9 +140,8 @@
       add('assistant', prompt);
     }
 
-    // Only gray out form once form is filled and next is clicked
+    // Gray out form once form is filled and next is clicked, show chat and restart button
     prechatForm.onsubmit = function() {
-      // Validate required fields (browser will do this, but we check again)
       if (
         !projectTypeEl.value ||
         !zipEl.value.trim() ||
@@ -135,12 +152,21 @@
       }
       prechatForm.classList.add('disabled-form');
       chatSection.classList.remove('hidden');
+      restartBtn.classList.remove('hidden');
       startNewChat();
       return false;
     };
 
-    // Optional: Allow user to restart (not requested, but easy to add)
-    // You can add a "Restart" button to reset the flow if needed.
+    // Restart button logic: close chat, re-enable form, keep previous form values
+    restartBtn.onclick = function() {
+      chatSection.classList.add('hidden');
+      prechatForm.classList.remove('disabled-form');
+      restartBtn.classList.add('hidden');
+      // Clear chat messages and AI/user history
+      chatEl.innerHTML = '';
+      messages.length = 0;
+      // Do not reset form values!
+    };
   </script>
 </body>
 </html>
