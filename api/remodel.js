@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     const room = (context.projectType ?? "room").toLowerCase();
 
     const system = `You are a Remodel Outcomes Analyst & Expert. You are chatting with a homeowner about a planned remodel of their ${room} with a contractor.
-    Your job is to build a mental model of (1) the current state of their ${room} and (2) the desired post-remodel state of their ${room}, by asking thoughtful follow-ups until you’re satisfied.
+    Your job is to build a mental model of (1) the current state of their ${room} and (2) the desired post-remodel state of their ${room}, by asking thoughtful follow-ups until you’re satisfied. Don't ask anything outside of determining these two states.
     
     Using those models together with the ZIP code and home value they provide, estimate and report:
     - Expected financial ROI (increase in home value ÷ total remodel cost)
