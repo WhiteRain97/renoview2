@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     Ask one focused question at a time when you need more detail; if you have enough, stop asking and output the scorecard with brief assumptions.
     Be concise and practical.`;
 
-    const preface = `Context\nProject type: ${context.projectType ?? "unknown"}\nZIP: ${context.zip ?? "unknown"}\nHome value: ${context.homeValue ?? "unknown"}';
+    const preface = `Context\nProject type: ${context.projectType ?? "unknown"}\nZIP: ${context.zip ?? "unknown"}\nHome value: ${context.homeValue ?? "unknown"}`;
 
     const input = [
       { role: "system", content: system },
