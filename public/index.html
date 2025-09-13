@@ -102,6 +102,44 @@
 
     const messages = [];
 
+    function normalizeROI(roiStr) {
+      const match = roiStr.match(/(\d+)\s*%/);
+      if (!match) return 0;
+      const roi = parseInt(match[1], 10);
+      return Math.max(1, Math.min(10, Math.ceil(roi / 10)));
+    }
+
+    function normalizeCost(costStr) {
+      // Assumes format like "$5,000-$10,000" or "$8000"
+      const match = costStr.replace(/,/g,'').match(/\$?([\d\.]+)/);
+      if (!match) return 0;
+      const cost = parseFloat(match[1]);
+      if (cost < 5000) return 10;
+      if (cost < 10000) return 9;
+      if (cost < 20000) return 8;
+      if (cost < 40000) return 7;
+      if (cost < 80000) return 6;
+      if (cost < 160000) return 5;
+      if (cost < 320000) return 4;
+      if (cost < 640000) return 3;
+      if (cost < 1280000) return 2;
+      return 1;
+    }
+
+    function normalizeTimeline(timeStr) {
+      timeStr = timeStr.toLowerCase();
+      if (timeStr.includes("immediate")) return 10;
+      if (timeStr.match(/<\s*1\s*day/)) return 9;
+      if (timeStr.match(/<\s*3\s*days?/)) return 8;
+      if (timeStr.match(/<\s*1\s*week/)) return 7;
+      if (timeStr.match(/<\s*2\s*weeks/)) return 6;
+      if (timeStr.match(/<\s*4\s*weeks/)) return 5;
+      if (timeStr.match(/<\s*2\s*months/)) return 4;
+      if (timeStr.match(/<\s*4\s*months/)) return 3;
+      if (timeStr.match(/<\s*8\s*months/)) return 2;
+      return 1;
+    }
+
     function renderScoreBars(scoreData) {
       // scoreData: [{label, value, explanation}]
       const container = document.createElement('div');
@@ -138,14 +176,11 @@
       chatEl.appendChild(container);
       chatEl.scrollTop = chatEl.scrollHeight;
     }
-    
-    // Example parser for the bot output format:
+
     function parseScorecard(text) {
-      // Assumes bot outputs in the specified format, values 0-10 or percentages, explanations in parentheses
-      // Adjust regexes as needed for your exact format
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
       const scorecardLabels = [
-        "Expected ROI",
+        "Expected financial ROI",
         "Estimated total cost",
         "Estimated timeline",
         "Expected improvement in aesthetics",
@@ -154,19 +189,20 @@
       const scores = [];
       for(let i=0; i<lines.length; i++) {
         for(const label of scorecardLabels) {
-          if(lines[i].startsWith(label)) {
+          if(lines[i].toLowerCase().startsWith(label.toLowerCase())) {
             const valueMatch = lines[i].match(/: ([^(\n]+)/);
             let value = valueMatch ? valueMatch[1].trim() : "";
-            // Normalize value for bar (e.g. "8/10" -> 8, "80%" -> 8, "$X-$Y" -> skip)
+            // Normalize value for bar (for all 5 metrics)
             let barValue = 0;
-            if(label.startsWith("Expected improvement") || label.startsWith("Expected longevity")) {
+            if(label === "Expected financial ROI") {
+              barValue = normalizeROI(value);
+            } else if(label === "Estimated total cost") {
+              barValue = normalizeCost(value);
+            } else if(label === "Estimated timeline") {
+              barValue = normalizeTimeline(value);
+            } else if(label === "Expected improvement in aesthetics" || label === "Expected longevity") {
               const m = value.match(/(\d+)/);
               barValue = m ? parseInt(m[1], 10) : 0;
-            } else if(label === "Expected ROI") {
-              const m = value.match(/(\d+)%/);
-              barValue = m ? parseInt(m[1], 10) / 10 : 0;
-            } else {
-              barValue = 0; // for cost/timeline, we won't show bars, or you can customize
             }
             // Explanation is next line in parentheses
             let explanation = "";
@@ -181,11 +217,10 @@
           }
         }
       }
-      // Only keep those with bar values (improvement, longevity, and optionally ROI)
-      return scores.filter(s => s.value > 0);
+      // Return all 5 (may be 0 if not found)
+      return scores;
     }
-    
-    // Update your add() function or message handler:
+
     function add(role, text) {
       if (role === 'assistant' && text.trim().startsWith('Here is your scorecard')) {
         // Parse and render bars
