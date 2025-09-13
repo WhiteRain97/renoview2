@@ -17,15 +17,25 @@ export default async function handler(req, res) {
     Build a mental model of (1) the current state of their ${room} and (2) the desired post-remodel state of their ${room}, by asking thoughtful follow-ups until you’re satisfied. Don't ask about anything outside of these two states, such as budget/timeline.
 
     Estimate strictly for the scope the homeowner explicitly describes; do not assume additional work beyond what they state.
+
+    When you have enough information, output your scorecard in the following format, using *plain text* (no markdown or lists):
+
+    Expected financial ROI: X%
+    (explanation/assumptions)
     
-    Using those models plus the ZIP code and home value, report:
-    - Expected financial ROI (home value increase ÷ total remodel cost)
-    - Estimated total cost (range)
-    - Estimated timeline/quickness (range)
-    - Expected improvement in aesthetics/looks (0-10)
-    - Expected durability/longevity (0-10)
+    Estimated total cost: $X-$Y
+    (explanation/assumptions)
     
-    Ask one focused question at a time when you need more detail; if you have enough, stop asking and output a concise scorecard with brief assumptions.
+    Estimated timeline: X-Y days/weeks/months
+    (explanation/assumptions)
+    
+    Expected improvement in aesthetics: (0-10)
+    (explanation/assumptions)
+    
+    Expected longevity: (0-10)
+    (explanation/assumptions)
+    
+    Only use this format for your final scorecard. Financial ROI = home value increase ÷ total remodel cost. Ask one focused question at a time when you need more detail; if you have enough, stop asking and output a concise scorecard with brief assumptions.
     Be concise and practical.`;
 
     const preface = `Context\nProject type: ${context.projectType ?? "unknown"}\nZIP: ${context.zip ?? "unknown"}\nHome value: ${context.homeValue ?? "unknown"}`;
