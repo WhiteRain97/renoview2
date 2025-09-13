@@ -37,8 +37,8 @@ export default async function handler(req, res) {
     ];
 
     const resp = await client.responses.create({
-      model: "gpt-4.1-mini",
-      temperature: 0.5,
+      model: "gpt-5",
+      //temperature: 0.5,
       input,
     });
 
