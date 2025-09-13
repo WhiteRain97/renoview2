@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     
     Only use this format for your final scorecard.
     
-    Financial ROI = home value increase ÷ total remodel cost. Longevity = Durability/antifragility/antiscratching/robustness with 5 being average.
+    Financial ROI = home value increase ÷ total remodel cost. Longevity = Durability/antifragility/antiscratching/robustness. Be brutally honest.
     
     Ask one focused question at a time when you need more detail; if you have enough, stop asking and output a concise scorecard with brief assumptions.
     Be concise and practical.`;
