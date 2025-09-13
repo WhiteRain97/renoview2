@@ -66,7 +66,7 @@
 
       <div id="chatSection" class="hidden">
         <div id="chat" class="chat"></div>
-        <div style="display:flex; gap:8px; margin-top: 8px;">
+        <div id="chatInputContainer" style="display:flex; gap:8px; margin-top: 8px;">
           <textarea id="input" placeholder="Type here..."></textarea>
           <button id="send">Send</button>
         </div>
@@ -82,6 +82,7 @@
     const chatEl = document.getElementById('chat');
     const inputEl = document.getElementById('input');
     const sendBtn = document.getElementById('send');
+    const chatInputContainer = document.getElementById('chatInputContainer');
     const projectTypeEl = document.getElementById('projectType');
     const zipEl = document.getElementById('zip');
     const homeValueEl = document.getElementById('homeValue');
@@ -101,6 +102,7 @@
     });
 
     const messages = [];
+    let scorecardRendered = false;
 
     // Bar colors by score
     const SCORE_COLORS = [
@@ -244,11 +246,26 @@
       return scores;
     }
 
+    function disableChat() {
+      inputEl.disabled = true;
+      sendBtn.disabled = true;
+      chatInputContainer.classList.add('disabled-chat');
+      scorecardRendered = true;
+    }
+
+    function enableChat() {
+      inputEl.disabled = false;
+      sendBtn.disabled = false;
+      chatInputContainer.classList.remove('disabled-chat');
+      scorecardRendered = false;
+    }
+
     function add(role, text) {
       if (role === 'assistant' && text.trim().startsWith('Here is your scorecard')) {
         // Parse and render bars
         const scores = parseScorecard(text);
         renderScoreBars(scores);
+        disableChat();
       } else {
         const div = document.createElement('div');
         div.className = 'msg ' + (role === 'assistant' ? 'bot' : 'me');
@@ -276,6 +293,7 @@
     }
 
     sendBtn.onclick = async () => {
+      if (scorecardRendered) return;
       const text = inputEl.value.trim();
       if (!text) return;
       messages.push({ role: 'user', content: text });
@@ -302,6 +320,7 @@
       const prompt = getInitialPrompt(type);
       messages.push({ role: 'assistant', content: prompt });
       add('assistant', prompt);
+      enableChat();
     }
 
     // Gray out form once form is filled and next is clicked, show chat and restart button
@@ -331,6 +350,7 @@
       // Clear chat messages and AI/user history
       chatEl.innerHTML = '';
       messages.length = 0;
+      enableChat();
       // Do not reset form values!
     };
   </script>
