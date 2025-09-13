@@ -239,7 +239,7 @@
         "Expected financial ROI",
         "Estimated total cost",
         "Estimated timeline",
-        "Expected improvement in aesthetics",
+        //"Expected improvement in aesthetics",
         "Expected longevity"
       ];
       const scores = [];
@@ -258,7 +258,7 @@
             } else if(label === "Estimated timeline") {
               barValue = normalizeTimeline(value);
               rangeText = value;
-            } else if(label === "Expected improvement in aesthetics" || label === "Expected longevity") {
+            } else if(/*label === "Expected improvement in aesthetics" || */label === "Expected longevity") {
               const m = value.match(/(\d+)/);
               barValue = m ? parseInt(m[1], 10) : 0;
             }
