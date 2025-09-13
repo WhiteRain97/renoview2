@@ -102,6 +102,20 @@
 
     const messages = [];
 
+    // Bar colors by score
+    const SCORE_COLORS = [
+      "#FF0000", // 1
+      "#FF3300", // 2
+      "#ff6600", // 3
+      "#ff9900", // 4
+      "#FFCC00", // 5
+      "#FFFF00", // 6
+      "#ccff00", // 7
+      "#99ff00", // 8
+      "#66ff00", // 9
+      "#33ff00"  // 10
+    ];
+
     function normalizeROI(roiStr) {
       const match = roiStr.match(/(\d+)\s*%/);
       if (!match) return 0;
@@ -144,10 +158,14 @@
       const container = document.createElement('div');
       container.style.margin = "20px 0";
       scoreData.forEach(item => {
-        // Bar label and score
+        // Bar label and score (add " / 10")
         const label = document.createElement('div');
-        label.textContent = `${item.label}: ${item.barValue}`;
+        label.textContent = `${item.label}: ${item.barValue} / 10`;
         container.appendChild(label);
+
+        // Bar color by score (1-indexed)
+        const colorIdx = Math.max(1, Math.min(10, item.barValue)) - 1;
+        const barColor = SCORE_COLORS[colorIdx];
 
         // Bar
         const barOuter = document.createElement('div');
@@ -157,7 +175,7 @@
         barOuter.style.margin = "6px 0";
         barOuter.style.width = "100%";
         const barInner = document.createElement('div');
-        barInner.style.background = "#3ba7fa";
+        barInner.style.background = barColor;
         barInner.style.height = "100%";
         barInner.style.width = (item.barValue / 10 * 100) + "%"; // value expected 0-10
         barInner.style.borderRadius = "8px";
