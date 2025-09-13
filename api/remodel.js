@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
     Estimate strictly for the scope the homeowner explicitly describes; do not assume additional work beyond what they state.
 
-    When you have enough information, output your scorecard in the following format, using *plain text* (no markdown or lists):
+    Using those models plus the ZIP code and home value, output your scorecard in the following format, using *plain text* (no markdown or lists):
 
     Expected financial ROI: X%
     (explanation/assumptions)
