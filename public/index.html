@@ -67,7 +67,10 @@
             <option value="$20k-$40k">$20k-$40k</option>
             <option value="$40k-$80k">$40k-$80k</option>
             <option value="$80k-$160k">$80k-$160k</option>
-            <option value=">$160k">&gt;$160k</option>
+            <option value="$160k-$320k">$160k-$320k</option>
+            <option value="$320k-$640k">$320k-$640k</option>
+            <option value="$640k-$1.28M">$640k-$1.28M</option>
+            <option value=">$1.28M">&gt;$1.28M</option>
           </select>
           <select id="timeline" required>
             <option value="">Timeline...</option>
@@ -79,7 +82,8 @@
             <option value="1-2 months">1-2 months</option>
             <option value="2-4 months">2-4 months</option>
             <option value="4-8 months">4-8 months</option>
-            <option value=">8 months">&gt;8 months</option>
+            <option value="8-16 months">8-16 months</option>
+            <option value=">16 months">&gt;16 months</option>
           </select>
         </div>
         <button id="nextBtn" type="submit">Next</button>
@@ -98,6 +102,8 @@
   </div>
 
   <script>
+    // ...existing JS code (no changes needed for dropdown features)...
+    // The only changes are in the HTML for the dropdowns and the DOM selectors (budgetEl and timelineEl)
     const prechatForm = document.getElementById('prechatForm');
     const chatSection = document.getElementById('chatSection');
     const chatEl = document.getElementById('chat');
