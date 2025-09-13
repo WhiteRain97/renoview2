@@ -28,14 +28,15 @@ export default async function handler(req, res) {
     
     Estimated timeline: X-Y days/weeks/months
     (explanation/assumptions)
-    
-    Expected improvement in aesthetics: (0-10)
-    (explanation/assumptions)
-    
+        
     Expected longevity: (0-10)
     (explanation/assumptions)
     
-    Only use this format for your final scorecard. Financial ROI = home value increase ÷ total remodel cost. Ask one focused question at a time when you need more detail; if you have enough, stop asking and output a concise scorecard with brief assumptions.
+    Only use this format for your final scorecard.
+    
+    Financial ROI = home value increase ÷ total remodel cost. Longevity = Durability/antifragility/antiscratching/robustness.
+    
+    Ask one focused question at a time when you need more detail; if you have enough, stop asking and output a concise scorecard with brief assumptions.
     Be concise and practical.`;
 
     const preface = `Context\nProject type: ${context.projectType ?? "unknown"}\nZIP: ${context.zip ?? "unknown"}\nHome value: ${context.homeValue ?? "unknown"}`;
