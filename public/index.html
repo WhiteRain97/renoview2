@@ -142,17 +142,50 @@
       return 1;
     }
 
-    function normalizeTimeline(timeStr) {
-      timeStr = timeStr.toLowerCase();
-      if (timeStr.includes("immediate")) return 10;
-      if (timeStr.match(/<\s*1\s*day/)) return 9;
-      if (timeStr.match(/<\s*3\s*days?/)) return 8;
-      if (timeStr.match(/<\s*1\s*week/)) return 7;
-      if (timeStr.match(/<\s*2\s*weeks/)) return 6;
-      if (timeStr.match(/<\s*4\s*weeks/)) return 5;
-      if (timeStr.match(/<\s*2\s*months/)) return 4;
-      if (timeStr.match(/<\s*4\s*months/)) return 3;
-      if (timeStr.match(/<\s*8\s*months/)) return 2;
+    function normalizeTimeline(str) {
+      str = str.toLowerCase();
+    
+      if (str.includes("immediate")) return 10;
+    
+      // Extract all numbers and their units (days/weeks/months)
+      // Handles "1-2 weeks", "3-7 days", "<1 week", "2 weeks", etc.
+      const range = str.match(/(\d+)\s*-\s*(\d+)\s*(day|week|month)s?/);
+      if (range) {
+        const max = parseInt(range[2], 10);
+        const unit = range[3];
+        return scoreFromDuration(max, unit);
+      }
+    
+      const single = str.match(/<\s*(\d+)\s*(day|week|month)s?/);
+      if (single) {
+        const val = parseInt(single[1], 10) - 1;
+        return scoreFromDuration(val > 0 ? val : 1, single[2]);
+      }
+    
+      const lone = str.match(/(\d+)\s*(day|week|month)s?/);
+      if (lone) {
+        return scoreFromDuration(parseInt(lone[1], 10), lone[2]);
+      }
+    
+      return 1; // fallback
+    }
+    
+    function scoreFromDuration(val, unit) {
+      // Convert everything to days for scoring
+      let days = val;
+      if (unit.startsWith('week')) days *= 7;
+      if (unit.startsWith('month')) days *= 30;
+    
+      if (days <= 0) return 10;
+      if (days < 1) return 10;
+      if (days < 3) return 9;
+      if (days < 7) return 8;
+      if (days < 14) return 7;
+      if (days < 28) return 6;
+      if (days < 60) return 5;
+      if (days < 120) return 4;
+      if (days < 240) return 3;
+      if (days < 480) return 2;
       return 1;
     }
 
