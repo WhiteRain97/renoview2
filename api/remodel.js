@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     Estimate strictly for the scope the homeowner explicitly describes; do not assume additional work beyond what they state.
     
     Using those models plus the ZIP code and home value, report:
-    - Expected financial ROI (resale recoup % of total remodel cost)
+    - Expected financial ROI (home value increase ÷ total remodel cost)
     - Estimated total cost (range)
     - Estimated timeline/quickness (range)
     - Expected improvement in aesthetics/looks (0-10)
