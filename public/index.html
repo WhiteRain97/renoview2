@@ -102,16 +102,106 @@
 
     const messages = [];
 
-    function add(role, text) {
-      const div = document.createElement('div');
-      div.className = 'msg ' + (role === 'assistant' ? 'bot' : 'me');
-      if (role === 'assistant') {
-        div.innerHTML = marked.parse(text);
-      } else {
-        div.textContent = text;
-      }
-      chatEl.appendChild(div);
+    function renderScoreBars(scoreData) {
+      // scoreData: [{label, value, explanation}]
+      const container = document.createElement('div');
+      container.style.margin = "20px 0";
+      scoreData.forEach(item => {
+        // Bar label and score
+        const label = document.createElement('div');
+        label.textContent = `${item.label}: ${item.value}`;
+        container.appendChild(label);
+    
+        // Bar
+        const barOuter = document.createElement('div');
+        barOuter.style.background = "#333";
+        barOuter.style.height = "18px";
+        barOuter.style.borderRadius = "8px";
+        barOuter.style.margin = "6px 0";
+        barOuter.style.width = "100%";
+        const barInner = document.createElement('div');
+        barInner.style.background = "#3ba7fa";
+        barInner.style.height = "100%";
+        barInner.style.width = (item.value / 10 * 100) + "%"; // value expected 0-10
+        barInner.style.borderRadius = "8px";
+        barOuter.appendChild(barInner);
+        container.appendChild(barOuter);
+    
+        // Explanation
+        const expl = document.createElement('div');
+        expl.textContent = item.explanation;
+        expl.style.fontSize = "13px";
+        expl.style.opacity = 0.85;
+        expl.style.marginBottom = "16px";
+        container.appendChild(expl);
+      });
+      chatEl.appendChild(container);
       chatEl.scrollTop = chatEl.scrollHeight;
+    }
+    
+    // Example parser for the bot output format:
+    function parseScorecard(text) {
+      // Assumes bot outputs in the specified format, values 0-10 or percentages, explanations in parentheses
+      // Adjust regexes as needed for your exact format
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const scorecardLabels = [
+        "Expected ROI",
+        "Estimated total cost",
+        "Estimated timeline",
+        "Expected improvement in aesthetics",
+        "Expected longevity"
+      ];
+      const scores = [];
+      for(let i=0; i<lines.length; i++) {
+        for(const label of scorecardLabels) {
+          if(lines[i].startsWith(label)) {
+            const valueMatch = lines[i].match(/: ([^(\n]+)/);
+            let value = valueMatch ? valueMatch[1].trim() : "";
+            // Normalize value for bar (e.g. "8/10" -> 8, "80%" -> 8, "$X-$Y" -> skip)
+            let barValue = 0;
+            if(label.startsWith("Expected improvement") || label.startsWith("Expected longevity")) {
+              const m = value.match(/(\d+)/);
+              barValue = m ? parseInt(m[1], 10) : 0;
+            } else if(label === "Expected ROI") {
+              const m = value.match(/(\d+)%/);
+              barValue = m ? parseInt(m[1], 10) / 10 : 0;
+            } else {
+              barValue = 0; // for cost/timeline, we won't show bars, or you can customize
+            }
+            // Explanation is next line in parentheses
+            let explanation = "";
+            if(lines[i+1] && lines[i+1].startsWith('(')) {
+              explanation = lines[i+1].replace(/^\(|\)$/g, '');
+            }
+            scores.push({
+              label, 
+              value: barValue, // 0-10 for bar, adjust as needed
+              explanation
+            });
+          }
+        }
+      }
+      // Only keep those with bar values (improvement, longevity, and optionally ROI)
+      return scores.filter(s => s.value > 0);
+    }
+    
+    // Update your add() function or message handler:
+    function add(role, text) {
+      if (role === 'assistant' && text.trim().startsWith('Here is your scorecard')) {
+        // Parse and render bars
+        const scores = parseScorecard(text);
+        renderScoreBars(scores);
+      } else {
+        const div = document.createElement('div');
+        div.className = 'msg ' + (role === 'assistant' ? 'bot' : 'me');
+        if (role === 'assistant') {
+          div.innerHTML = marked.parse(text);
+        } else {
+          div.textContent = text;
+        }
+        chatEl.appendChild(div);
+        chatEl.scrollTop = chatEl.scrollHeight;
+      }
     }
 
     async function callAPI() {
