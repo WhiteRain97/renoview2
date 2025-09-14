@@ -48,7 +48,7 @@
       display: flex;
       justify-content: center;
       margin-bottom: 30px;
-      margin-top: 12px;
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -222,15 +222,9 @@
     }
 
     // --- Final Score Circle Rendering ---
-    function getAvgScoreColor(avg) {
-      if (avg >= 7) return "#33ff00"; // Green
-      if (avg >= 4) return "#FFFF00"; // Yellow
-      return "#FF0000"; // Red
-    }
-
-    function renderFinalScoreCircle(scores) {
-      // Remove any previous circle
-      const prev = document.getElementById('final-score-circle');
+    function renderFinalScoreCircle(scores, parentEl) {
+      // Remove any previous circle (only within parentEl)
+      const prev = parentEl.querySelector('#final-score-circle');
       if (prev) prev.parentNode.removeChild(prev);
 
       if (!scores || !scores.length) return;
@@ -241,35 +235,65 @@
       const avg = values.reduce((a, b) => a + b, 0) / values.length;
       const avgDisplay = avg.toFixed(1);
 
-      // SVG Circle
-      const color = getAvgScoreColor(avg);
+      // Color based on your scheme
+      let color;
+      if (avg >= 7) color = "#33ff00";
+      else if (avg >= 4) color = "#FFFF00";
+      else color = "#FF0000";
+
+      // SVG parameters
+      const size = 330;
+      const stroke = 32;
+      const radius = (size - stroke) / 2;
+      const center = size / 2;
 
       const container = document.createElement('div');
       container.className = "final-score-circle-container";
       container.id = "final-score-circle";
       container.innerHTML = `
-        <svg width="110" height="110">
-          <circle cx="55" cy="55" r="50" fill="${color}" stroke="#333" stroke-width="2"/>
-          <text x="55" y="62" text-anchor="middle" font-size="34" font-weight="bold" fill="${avg >= 4 ? '#222' : '#fff'}">${avgDisplay}</text>
-          <text x="55" y="82" text-anchor="middle" font-size="18" fill="${avg >= 4 ? '#222' : '#fff'}">/ 10</text>
+        <svg width="${size}" height="${size}">
+          <circle
+            cx="${center}"
+            cy="${center}"
+            r="${radius}"
+            fill="none"
+            stroke="${color}"
+            stroke-width="${stroke}"
+          />
+          <text
+            x="${center}"
+            y="${center - 10}"
+            text-anchor="middle"
+            dominant-baseline="middle"
+            font-size="74"
+            font-weight="bold"
+            fill="#fff"
+          >${avgDisplay}</text>
+          <text
+            x="${center}"
+            y="${center + 40}"
+            text-anchor="middle"
+            font-size="38"
+            fill="#fff"
+          >/ 10</text>
         </svg>
       `;
-      // Insert above score bars (which get appended to chatEl)
-      chatEl.appendChild(container);
-      // Move to very top of chatEl if score bars are after
-      if (chatEl.firstChild !== container) {
-        chatEl.insertBefore(container, chatEl.firstChild);
-      }
+      parentEl.appendChild(container);
     }
 
     function renderScoreBars(scoreData) {
-      renderFinalScoreCircle(scoreData); // <--- Call here!
-      const container = document.createElement('div');
-      container.style.margin = "20px 0";
+      // Container for both the circle and the bars
+      const wrapper = document.createElement('div');
+      wrapper.style.margin = "30px 0";
+      
+      // Circle
+      renderFinalScoreCircle(scoreData, wrapper);
+
+      // Bars
       scoreData.forEach(item => {
         const label = document.createElement('div');
         label.textContent = `${item.label}: ${item.barValue} / 10`;
-        container.appendChild(label);
+        wrapper.appendChild(label);
 
         const colorIdx = Math.max(1, Math.min(10, item.barValue)) - 1;
         const barColor = SCORE_COLORS[colorIdx];
@@ -286,7 +310,7 @@
         barInner.style.width = (item.barValue / 10 * 100) + "%";
         barInner.style.borderRadius = "8px";
         barOuter.appendChild(barInner);
-        container.appendChild(barOuter);
+        wrapper.appendChild(barOuter);
 
         const expl = document.createElement('div');
         expl.style.fontSize = "13px";
@@ -297,9 +321,9 @@
         } else {
           expl.textContent = item.explanation;
         }
-        container.appendChild(expl);
+        wrapper.appendChild(expl);
       });
-      chatEl.appendChild(container);
+      chatEl.appendChild(wrapper);
       chatEl.scrollTop = chatEl.scrollHeight;
     }
 
