@@ -50,6 +50,19 @@
       margin-bottom: 30px;
       margin-top: 20px;
     }
+    .final-score-circle-svg-text {
+      font-size: 68px;
+      font-weight: bold;
+      fill: #fff;
+      font-family: inherit;
+      dominant-baseline: middle;
+      alignment-baseline: middle;
+    }
+    /* Responsive for smaller screens */
+    @media (max-width: 600px) {
+      .final-score-circle-container svg { width: 200px !important; height: 200px !important; }
+      .final-score-circle-svg-text { font-size: 32px !important; }
+    }
   </style>
 </head>
 <body>
@@ -226,15 +239,15 @@
       // Remove any previous circle (only within parentEl)
       const prev = parentEl.querySelector('#final-score-circle');
       if (prev) prev.parentNode.removeChild(prev);
-    
+
       if (!scores || !scores.length) return;
-    
+
       // Only use the barValue for the average
       const values = scores.map(s => Number(s.barValue)).filter(v => !isNaN(v));
       if (!values.length) return;
       const avg = values.reduce((a, b) => a + b, 0) / values.length;
       const avgDisplay = avg.toFixed(1);
-    
+
       // Use the exact same color scheme as the bars
       const SCORE_COLORS = [
         "#FF0000","#FF3300","#ff6600","#ff9900","#FFCC00",
@@ -242,13 +255,17 @@
       ];
       const avgIdx = Math.max(1, Math.round(avg)) - 1;
       const color = SCORE_COLORS[avgIdx];
-    
-      // SVG parameters
-      const size = 330;
-      const stroke = 32;
+
+      // SVG parameters (slightly smaller than before)
+      const size = 280;
+      const stroke = 29;
       const radius = (size - stroke) / 2;
       const center = size / 2;
-    
+      const circumference = 2 * Math.PI * radius;
+      const percent = Math.max(0, Math.min(avg / 10, 1));
+      const dash = percent * circumference;
+      const gap = circumference - dash;
+
       const container = document.createElement('div');
       container.className = "final-score-circle-container";
       container.id = "final-score-circle";
@@ -259,25 +276,26 @@
             cy="${center}"
             r="${radius}"
             fill="none"
-            stroke="${color}"
+            stroke="#333"
             stroke-width="${stroke}"
           />
+          <circle
+            cx="${center}"
+            cy="${center}"
+            r="${radius}"
+            fill="none"
+            stroke="${color}"
+            stroke-width="${stroke}"
+            stroke-dasharray="${dash} ${gap}"
+            stroke-linecap="round"
+            transform="rotate(-90,${center},${center})"
+          />
           <text
-            x="${center}"
-            y="${center - 10}"
+            x="50%"
+            y="52%"
             text-anchor="middle"
-            dominant-baseline="middle"
-            font-size="74"
-            font-weight="bold"
-            fill="#fff"
-          >${avgDisplay}</text>
-          <text
-            x="${center}"
-            y="${center + 40}"
-            text-anchor="middle"
-            font-size="38"
-            fill="#fff"
-          >/ 10</text>
+            class="final-score-circle-svg-text"
+          >${avgDisplay} / 10</text>
         </svg>
       `;
       parentEl.appendChild(container);
