@@ -226,27 +226,29 @@
       // Remove any previous circle (only within parentEl)
       const prev = parentEl.querySelector('#final-score-circle');
       if (prev) prev.parentNode.removeChild(prev);
-
+    
       if (!scores || !scores.length) return;
-
+    
       // Only use the barValue for the average
       const values = scores.map(s => Number(s.barValue)).filter(v => !isNaN(v));
       if (!values.length) return;
       const avg = values.reduce((a, b) => a + b, 0) / values.length;
       const avgDisplay = avg.toFixed(1);
-
-      // Color based on your scheme
-      let color;
-      if (avg >= 7) color = "#33ff00";
-      else if (avg >= 4) color = "#FFFF00";
-      else color = "#FF0000";
-
+    
+      // Use the exact same color scheme as the bars
+      const SCORE_COLORS = [
+        "#FF0000","#FF3300","#ff6600","#ff9900","#FFCC00",
+        "#FFFF00","#ccff00","#99ff00","#66ff00","#33ff00"
+      ];
+      const avgIdx = Math.max(1, Math.round(avg)) - 1;
+      const color = SCORE_COLORS[avgIdx];
+    
       // SVG parameters
       const size = 330;
       const stroke = 32;
       const radius = (size - stroke) / 2;
       const center = size / 2;
-
+    
       const container = document.createElement('div');
       container.className = "final-score-circle-container";
       container.id = "final-score-circle";
