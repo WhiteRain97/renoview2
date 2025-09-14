@@ -100,10 +100,7 @@
       </div>
     </div>
   </div>
-
   <script>
-    // ...existing JS code (no changes needed for dropdown features)...
-    // The only changes are in the HTML for the dropdowns and the DOM selectors (budgetEl and timelineEl)
     const prechatForm = document.getElementById('prechatForm');
     const chatSection = document.getElementById('chatSection');
     const chatEl = document.getElementById('chat');
@@ -127,7 +124,6 @@
       projectType: projectTypeEl.value,
       zip: zipEl.value,
       homeValue: homeValueEl.value,
-      // budget and timeline intentionally NOT included here
     });
 
     const messages = [];
@@ -135,17 +131,76 @@
 
     // Bar colors by score
     const SCORE_COLORS = [
-      "#FF0000", // 1
-      "#FF3300", // 2
-      "#ff6600", // 3
-      "#ff9900", // 4
-      "#FFCC00", // 5
-      "#FFFF00", // 6
-      "#ccff00", // 7
-      "#99ff00", // 8
-      "#66ff00", // 9
-      "#33ff00"  // 10
+      "#FF0000","#FF3300","#ff6600","#ff9900","#FFCC00",
+      "#FFFF00","#ccff00","#99ff00","#66ff00","#33ff00"
     ];
+
+    // Budget and timeline range arrays for scoring
+    const budgetRanges = [
+      { label: "<$5k", min: 0, max: 5000 },
+      { label: "$5k-$10k", min: 5000, max: 10000 },
+      { label: "$10k-$20k", min: 10000, max: 20000 },
+      { label: "$20k-$40k", min: 20000, max: 40000 },
+      { label: "$40k-$80k", min: 40000, max: 80000 },
+      { label: "$80k-$160k", min: 80000, max: 160000 },
+      { label: "$160k-$320k", min: 160000, max: 320000 },
+      { label: "$320k-$640k", min: 320000, max: 640000 },
+      { label: "$640k-$1.28M", min: 640000, max: 1280000 },
+      { label: ">$1.28M", min: 1280000, max: Infinity }
+    ];
+    const timelineRanges = [
+      { label: "<1 day", min: 0, max: 1 },
+      { label: "1-3 days", min: 1, max: 3 },
+      { label: "3-7 days", min: 3, max: 7 },
+      { label: "1-2 weeks", min: 7, max: 14 },
+      { label: "2-4 weeks", min: 14, max: 28 },
+      { label: "1-2 months", min: 28, max: 60 },
+      { label: "2-4 months", min: 60, max: 120 },
+      { label: "4-8 months", min: 120, max: 240 },
+      { label: "8-16 months", min: 240, max: 480 },
+      { label: ">16 months", min: 480, max: Infinity }
+    ];
+
+    function findRangeIndex(value, ranges) {
+      for (let i = 0; i < ranges.length; i++) {
+        if (value >= ranges[i].min && value < ranges[i].max) return i;
+      }
+      return ranges.length - 1;
+    }
+
+    function customScore(userIndex, estIndex) {
+      const diff = estIndex - userIndex;
+      if (diff === 0) return 10;
+      if (diff < 0) return Math.max(1, 10 + diff);
+      return Math.max(1, 10 - 2 * diff);
+    }
+
+    function normalizeBudgetScore(estimateRangeStr) {
+      let [min, max] = estimateRangeStr.replace(/[\$,]/g, '').split('-').map(Number);
+      if (isNaN(min)) min = 0;
+      if (!max || isNaN(max)) max = min;
+      const avg = (min + max) / 2;
+      const userIndex = budgetRanges.findIndex(r => r.label === storedBudget);
+      const estIndex = findRangeIndex(avg, budgetRanges);
+      return customScore(userIndex, estIndex);
+    }
+
+    function normalizeTimelineScore(estimateRangeStr) {
+      let match = estimateRangeStr.match(/([<\d\.]+)\s*-?\s*([>\d\.]*)\s*(day|week|month)/i);
+      if (!match) return 1;
+      let min = match[1].replace(/[^\d\.]/g,'');
+      let max = match[2].replace(/[^\d\.]/g,'');
+      let unit = match[3].toLowerCase();
+      min = Number(min) || 0;
+      max = Number(max) || min;
+      const unitToDays = { day: 1, week: 7, month: 30 };
+      min = min * (unitToDays[unit] || 1);
+      max = max * (unitToDays[unit] || 1);
+      const avg = (min + max) / 2;
+      const userIndex = timelineRanges.findIndex(r => r.label === storedTimeline);
+      const estIndex = findRangeIndex(avg, timelineRanges);
+      return customScore(userIndex, estIndex);
+    }
 
     function normalizeROI(roiStr) {
       const match = roiStr.match(/(\d+)\s*%/);
@@ -154,84 +209,22 @@
       return Math.max(1, Math.min(10, Math.ceil(roi / 10)));
     }
 
-    function normalizeCost(costStr) {
-      // Assumes format like "$5,000-$10,000" or "$8000"
-      const match = costStr.replace(/,/g,'').match(/\$?([\d\.]+)/);
-      if (!match) return 0;
-      const cost = parseFloat(match[1]);
-      if (cost < 5000) return 10;
-      if (cost < 10000) return 9;
-      if (cost < 20000) return 8;
-      if (cost < 40000) return 7;
-      if (cost < 80000) return 6;
-      if (cost < 160000) return 5;
-      if (cost < 320000) return 4;
-      if (cost < 640000) return 3;
-      if (cost < 1280000) return 2;
-      return 1;
-    }
-
-    function normalizeTimeline(str) {
-      str = str.toLowerCase();
-    
-      if (str.includes("immediate")) return 10;
-    
-      // Extract all numbers and their units (days/weeks/months)
-      // Handles "1-2 weeks", "3-7 days", "<1 week", "2 weeks", etc.
-      const range = str.match(/(\d+)\s*-\s*(\d+)\s*(day|week|month)s?/);
-      if (range) {
-        const max = parseInt(range[2], 10);
-        const unit = range[3];
-        return scoreFromDuration(max, unit);
-      }
-    
-      const single = str.match(/<\s*(\d+)\s*(day|week|month)s?/);
-      if (single) {
-        const val = parseInt(single[1], 10) - 1;
-        return scoreFromDuration(val > 0 ? val : 1, single[2]);
-      }
-    
-      const lone = str.match(/(\d+)\s*(day|week|month)s?/);
-      if (lone) {
-        return scoreFromDuration(parseInt(lone[1], 10), lone[2]);
-      }
-    
-      return 1; // fallback
-    }
-    
-    function scoreFromDuration(val, unit) {
-      // Convert everything to days for scoring
-      let days = val;
-      if (unit.startsWith('week')) days *= 7;
-      if (unit.startsWith('month')) days *= 30;
-    
-      if (days <= 0) return 10;
-      if (days < 1) return 10;
-      if (days < 3) return 9;
-      if (days < 7) return 8;
-      if (days < 14) return 7;
-      if (days < 28) return 6;
-      if (days < 60) return 5;
-      if (days < 120) return 4;
-      if (days < 240) return 3;
-      if (days < 480) return 2;
-      return 1;
+    function normalizeLongevity(value) {
+      const m = value.match(/(\d+)/);
+      return m ? parseInt(m[1], 10) : 0;
     }
 
     function renderScoreBars(scoreData) {
       const container = document.createElement('div');
       container.style.margin = "20px 0";
       scoreData.forEach(item => {
-        // Bar label and score (add " / 10")
         const label = document.createElement('div');
         label.textContent = `${item.label}: ${item.barValue} / 10`;
         container.appendChild(label);
 
-        // Bar color by score (1-indexed)
         const colorIdx = Math.max(1, Math.min(10, item.barValue)) - 1;
         const barColor = SCORE_COLORS[colorIdx];
 
-        // Bar
         const barOuter = document.createElement('div');
         barOuter.style.background = "#333";
         barOuter.style.height = "18px";
@@ -241,12 +234,11 @@
         const barInner = document.createElement('div');
         barInner.style.background = barColor;
         barInner.style.height = "100%";
-        barInner.style.width = (item.barValue / 10 * 100) + "%"; // value expected 0-10
+        barInner.style.width = (item.barValue / 10 * 100) + "%";
         barInner.style.borderRadius = "8px";
         barOuter.appendChild(barInner);
         container.appendChild(barOuter);
 
-        // Explanation (show the actual range for first 3)
         const expl = document.createElement('div');
         expl.style.fontSize = "13px";
         expl.style.opacity = 0.85;
@@ -281,23 +273,21 @@
               barValue = normalizeROI(value);
               rangeText = value;
             } else if(label === "Estimated total cost") {
-              barValue = normalizeCost(value);
+              barValue = normalizeBudgetScore(value);
               rangeText = value;
             } else if(label === "Estimated timeline") {
-              barValue = normalizeTimeline(value);
+              barValue = normalizeTimelineScore(value);
               rangeText = value;
             } else if(label === "Expected longevity") {
-              const m = value.match(/(\d+)/);
-              barValue = m ? parseInt(m[1], 10) : 0;
+              barValue = normalizeLongevity(value);
             }
-            // Explanation is next line in parentheses
             if(lines[i+1] && lines[i+1].startsWith('(')) {
               explanation = lines[i+1].replace(/^\(|\)$/g, '');
             }
             scores.push({
               label, 
-              value,      // The string value (range, percent, etc)
-              barValue,   // Normalized 0-10
+              value,
+              barValue,
               rangeText,
               explanation
             });
@@ -323,7 +313,6 @@
 
     function add(role, text) {
       if (role === 'assistant' && text.trim().startsWith('Here is your scorecard')) {
-        // Parse and render bars
         const scores = parseScorecard(text);
         renderScoreBars(scores);
         disableChat();
@@ -344,7 +333,6 @@
       const res = await fetch('/api/remodel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Only send the context WITHOUT budget and timeline
         body: JSON.stringify({ messages, context: ctx() })
       });
       const data = await res.json();
@@ -370,7 +358,6 @@
       if (type === 'kitchen') {
         return `Describe the current state of your kitchen in as much detail as possible. Include: approximate size or S/M/L, ceiling height, layout (galley/L/U/island/peninsula), cabinet style/material/color/height-to-ceiling/age/condition, countertop material/color/edges/backsplash, appliances (types, ages, finishes), sink/faucet, flooring (material/color/condition), lighting (cans, pendants, under-cabinet, brightness), electrical outlets, ventilation/hood, windows/doors, paint colors, and anything unusual/unique. Note roughly when it was last updated and any wear/issues you notice.`;
       }
-      // Default/fallback for "exterior" or unknown
       return "Describe the current state of your home exterior in as much detail as possible. Include: siding/paint/brick/stone materials and condition, roof (material, age, condition), windows/doors (type, condition), landscaping, pathways, fencing, lighting, drainage, and anything unusual/unique. Note roughly when last updated and any wear/issues you notice.";
     }
 
@@ -384,7 +371,6 @@
       enableChat();
     }
 
-    // Gray out form once form is filled and next is clicked, show chat and restart button
     prechatForm.onsubmit = function() {
       if (
         !projectTypeEl.value ||
@@ -395,7 +381,6 @@
       ) {
         return false;
       }
-      // Store budget and timeline locally for later scoring use
       storedBudget = budgetEl.value;
       storedTimeline = timelineEl.value;
       prechatForm.classList.add('disabled-form');
@@ -405,16 +390,13 @@
       return false;
     };
 
-    // Restart button logic: close chat, re-enable form, keep previous form values
     restartBtn.onclick = function() {
       chatSection.classList.add('hidden');
       prechatForm.classList.remove('disabled-form');
       restartBtn.classList.add('hidden');
-      // Clear chat messages and AI/user history
       chatEl.innerHTML = '';
       messages.length = 0;
       enableChat();
-      // Do not reset form values!
     };
   </script>
 </body>
