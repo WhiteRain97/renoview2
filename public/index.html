@@ -43,6 +43,13 @@
       opacity: 1;
       background: #222;
     }
+    /* Final Score Circle Styles */
+    .final-score-circle-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+      margin-top: 12px;
+    }
   </style>
 </head>
 <body>
@@ -214,7 +221,49 @@
       return m ? parseInt(m[1], 10) : 0;
     }
 
+    // --- Final Score Circle Rendering ---
+    function getAvgScoreColor(avg) {
+      if (avg >= 7) return "#33ff00"; // Green
+      if (avg >= 4) return "#FFFF00"; // Yellow
+      return "#FF0000"; // Red
+    }
+
+    function renderFinalScoreCircle(scores) {
+      // Remove any previous circle
+      const prev = document.getElementById('final-score-circle');
+      if (prev) prev.parentNode.removeChild(prev);
+
+      if (!scores || !scores.length) return;
+
+      // Only use the barValue for the average
+      const values = scores.map(s => Number(s.barValue)).filter(v => !isNaN(v));
+      if (!values.length) return;
+      const avg = values.reduce((a, b) => a + b, 0) / values.length;
+      const avgDisplay = avg.toFixed(1);
+
+      // SVG Circle
+      const color = getAvgScoreColor(avg);
+
+      const container = document.createElement('div');
+      container.className = "final-score-circle-container";
+      container.id = "final-score-circle";
+      container.innerHTML = `
+        <svg width="110" height="110">
+          <circle cx="55" cy="55" r="50" fill="${color}" stroke="#333" stroke-width="2"/>
+          <text x="55" y="62" text-anchor="middle" font-size="34" font-weight="bold" fill="${avg >= 4 ? '#222' : '#fff'}">${avgDisplay}</text>
+          <text x="55" y="82" text-anchor="middle" font-size="18" fill="${avg >= 4 ? '#222' : '#fff'}">/ 10</text>
+        </svg>
+      `;
+      // Insert above score bars (which get appended to chatEl)
+      chatEl.appendChild(container);
+      // Move to very top of chatEl if score bars are after
+      if (chatEl.firstChild !== container) {
+        chatEl.insertBefore(container, chatEl.firstChild);
+      }
+    }
+
     function renderScoreBars(scoreData) {
+      renderFinalScoreCircle(scoreData); // <--- Call here!
       const container = document.createElement('div');
       container.style.margin = "20px 0";
       scoreData.forEach(item => {
